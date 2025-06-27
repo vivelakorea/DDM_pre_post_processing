@@ -1,4 +1,4 @@
-# DDD-Bicrystal Toolkit Repository
+# DDM Toolkit Repository
 
 본 저장소는 ParaDiS와 Abaqus를 기반으로 하는 **DDM 시뮬레이션과 후처리 파이프라인**을 다룹니다. 아래는 각각의 서브 모듈 및 스크립트에 대한 설명입니다.
 
