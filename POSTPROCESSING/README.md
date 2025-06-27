@@ -120,9 +120,8 @@ python DDM2para.py paradis_only --paradis-frames 100 --no-parallel
 
 ---
 
-## 📬 문의 및 기여
+## 📞 문의
 
-본 도구는 연구용 스크립트입니다. 내부 구조 개선, 기능 추가, 에러 리포트 등 언제든 환영합니다.
-
----
-
+작성자: Gyujang Sim  
+소속: MAMEL Lab, SNU  
+문의: gyujang95@snu.ac.kr
