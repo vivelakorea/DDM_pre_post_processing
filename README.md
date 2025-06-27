@@ -7,7 +7,7 @@
 ## 📁 구성 요소 개요
 
 ### 1. `ParaDiS Bicrystal Generator (MATLAB)`
-- **위치**: `bicrystal_generator/`
+- **위치**: `POSTPROCESSING/`
 - **기능**: Frank–Read 소스를 기반으로 bicrystal 초기 조건 생성 (`.data`, `.ctrl`)
 - **주요 특징**:
   - grain boundary가 `y = 0`에 고정된 bicrystal
@@ -20,7 +20,7 @@
 ---
 
 ### 2. `Final INP Generator (Python)`
-- **위치**: `inp_postprocess/`
+- **위치**: `PREPROCESSING/ABAQUS/`
 - **기능**: ABAQUS CAE로부터 생성된 `.inp` 파일 후처리 및 변환
 - **주요 특징**:
   - 노드 중심 정렬
@@ -33,7 +33,7 @@
 ---
 
 ### 3. `VTK 변환 파이프라인 (Python)`
-- **위치**: `vtk_pipeline/`
+- **위치**: `PREPROCESSING/PARADIS/bi_crystal/`
 - **기능**: ParaDiS 및 Abaqus 결과를 `.vtu`, `.vtp`로 변환 + zip 압축
 - **주요 특징**:
   - Abaqus `.odb` → `.vtu`
