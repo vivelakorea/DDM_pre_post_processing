@@ -1,0 +1,25 @@
+** 
+** OUTPUT REQUESTS
+** 
+*Restart, write, number interval=1, time marks=NO
+** 
+** FIELD OUTPUT: F-Output-1
+** 
+*Output, field, time interval=0.01, time marks=YES
+*Element Output, directions=YES
+LE, MISES, S, SDV, STATUS
+** 
+** FIELD OUTPUT: F-Output-2
+** 
+*Node Output
+U, V, RF
+** 
+** HISTORY OUTPUT: H-Output-1
+** 
+*Output, history, time interval=0.001
+*Node Output, nset=X0
+RF2, 
+** 
+** HISTORY OUTPUT: H-Output-2
+** 
+*End Step

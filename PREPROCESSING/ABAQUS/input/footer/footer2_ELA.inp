@@ -1,0 +1,10 @@
+** 
+** MATERIALS
+** 
+*Material, name=m1
+**
+*Density
+2.7e-13
+**
+*Elastic
+100000., 0.333333

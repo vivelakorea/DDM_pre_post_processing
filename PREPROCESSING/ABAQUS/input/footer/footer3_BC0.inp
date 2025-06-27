@@ -1,0 +1,9 @@
+** 
+** BOUNDARY CONDITIONS
+** 
+*Boundary
+X0Y0Z0, PINNED
+*Boundary
+X0YLZ0, ZSYMM
+*Boundary
+X0, XSYMM

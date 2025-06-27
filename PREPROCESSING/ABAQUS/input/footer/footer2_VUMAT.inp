@@ -1,0 +1,15 @@
+** 
+** MATERIALS
+** 
+*Material, name=m1
+**
+*Density
+2.7e-13
+**
+*Depvar
+30
+**
+*User Material, constants=2
+128000., 0.34
+**
+*CHARACTERISTIC LENGTH, DEFINITION=USER, COMPONENTS=1

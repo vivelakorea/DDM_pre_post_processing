@@ -1,0 +1,3 @@
+*Section Controls, name=EC-1, DISTORTION CONTROL=YES, hourglass=RELAX STIFFNESS, second order accuracy=YES
+1., 1., 1.
+*Amplitude, name=AMP-GOOD, definition=USER, variables=0
