@@ -4,7 +4,7 @@ import os
 import argparse
 
 def generate_final_inp(input_file, final_output, ela_test=False):
-    PART_NAME = 'Microbeam'
+    PART_NAME = 'Part-1'
     Elset_col_num = 16
 
     # 1. Center alignment
@@ -98,6 +98,10 @@ def generate_final_inp(input_file, final_output, ela_test=False):
     z_min = min(n[3] for n in nodes)
     z_max = max(n[3] for n in nodes)
 
+    x_mid = (x_min + x_max) / 2
+    y_mid = (y_min + y_max) / 2
+    z_mid = (z_min + z_max) / 2
+
     def find_node(x_cond=None, y_cond=None, z_cond=None):
         result = []
         for n in nodes:
@@ -111,10 +115,11 @@ def generate_final_inp(input_file, final_output, ela_test=False):
     coord_map = {
         'min': {'x': x_min, 'y': y_min, 'z': z_min},
         'max': {'x': x_max, 'y': y_max, 'z': z_max},
+        'mid': {'x': x_mid, 'y': y_mid, 'z': z_mid},
         None: None
     }
 
-    choices = [None, 'min', 'max']
+    choices = [None, 'min', 'mid', 'max']
     nodeset_lines = []
 
     for x_choice in choices:
@@ -129,9 +134,9 @@ def generate_final_inp(input_file, final_output, ela_test=False):
                 if not matched_nodes:
                     continue
                 name_parts = []
-                if x_choice: name_parts.append(f"X0" if x_choice == 'min' else "XL")
-                if y_choice: name_parts.append(f"Y0" if y_choice == 'min' else "YL")
-                if z_choice: name_parts.append(f"Z0" if z_choice == 'min' else "ZL")
+                if x_choice: name_parts.append(f"X0" if x_choice == 'min' else ("XM" if x_choice == 'mid' else "XL"))
+                if y_choice: name_parts.append(f"Y0" if y_choice == 'min' else ("YM" if y_choice == 'mid' else "YL"))
+                if z_choice: name_parts.append(f"Z0" if z_choice == 'min' else ("ZM" if z_choice == 'mid' else "ZL"))
                 nset_name = "".join(name_parts)
                 nodeset_lines.append(f"*Nset, nset={nset_name}, instance={PART_NAME}-1\n")
                 for i in range(0, len(matched_nodes), Elset_col_num):
