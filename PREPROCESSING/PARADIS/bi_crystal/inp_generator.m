@@ -16,7 +16,7 @@ rng(42); % for reproducibility
 config.maxstep=1; % Set to 1 to run DDM; use >1 to run pure ParaDiS without DDM
 
 % --- Script Execution Control ---
-config.num_files_to_generate = 1;
+config.num_files_to_generate = 8;
 config.enable_plotting = true;
 
 
@@ -25,12 +25,13 @@ config.crystalStructure = 'FCC';
 config.mobilityLaw = 'FCC_0';
 
 % --- Bicrystal Rotation (Bunge Euler Angles) ---
-bunge_phi1 = 0.0; bunge_PHI = 0.0; bunge_phi2 = 0.0; % In DEGREES
+bunge_phi1 = 45.0; bunge_PHI = 54.74; bunge_phi2 = 0.0; % In DEGREES
 config.R = bunge_euler_to_matrix(deg2rad(bunge_phi1), deg2rad(bunge_PHI), deg2rad(bunge_phi2));
+config.R = (config.R)';
 
 % --- Geometry and Density ---
 % Box size is in units of b.
-config.boxSize_b = [8600,4300,4300];
+config.boxSize_b = [3500,3500,7000];
 % NOTE: 1e5 is very low. Typical values are 1e12 to 1e14.
 config.targetDensity = 1e13; % Target dislocation density in [m^-2]
 
@@ -41,7 +42,8 @@ config.frs_length_sigma = 0.00; % frs_length = mean_frs_length_b + std_dev_b * r
 config.maxSeg_b = 391.236307;
 config.minSeg_b = 78.247261;
 
-
+%
+config.name = 'D1750';
 
 
 % --- Material and Mobility Parameters ---
@@ -135,14 +137,33 @@ for i_file = 1:config.num_files_to_generate
         current_density_b2 = total_length_b / volume_b3;
     end
     fprintf('Target density reached. Final Density: %4.4e [/m^2]\n', current_density_b2 / (config.burgMag^2));
-    base_filename = sprintf('Bicrystal_%s_run_%d', config.crystalStructure, i_file);
-    if ~exist(config.output_folder, 'dir'), mkdir(config.output_folder); end
+    % base_filename = sprintf('Bicrystal_%s_run_%d', config.crystalStructure, i_file);
+    base_filename = sprintf('%s_%d', config.name, i_file);
     
-    write_paradis_control_file(fullfile(config.output_folder, [base_filename, '.ctrl']), config, base_filename);
-    write_paradis_data_file(fullfile(config.output_folder, [base_filename, '.data']), rn, links, box_b);
-end
-
-if config.enable_plotting, plot_bicrystal(rn, links, box_b, config); end
+    % 출력 폴더 생성
+    if ~exist(config.output_folder, 'dir')
+        mkdir(config.output_folder);
+    end
+    
+    % 결과 폴더 경로 생성 및 생성
+    results_folder = fullfile(config.output_folder, sprintf('%s_results', base_filename));
+    if ~exist(results_folder, 'dir')
+        mkdir(results_folder);
+    end
+    
+    % 파일 경로 지정
+    ctrl_path = fullfile(results_folder, [base_filename, '.ctrl']);
+    data_path = fullfile(results_folder, [base_filename, '.data']);
+    
+    % 디버그 출력
+    disp(ctrl_path);
+    
+    % 파일 생성 함수 호출
+    write_paradis_control_file(ctrl_path, config, base_filename);
+    write_paradis_data_file(data_path, rn, links, box_b);
+    end
+    
+    if config.enable_plotting, plot_bicrystal(rn, links, box_b, config); end
 
 
 %% ========================================================================
