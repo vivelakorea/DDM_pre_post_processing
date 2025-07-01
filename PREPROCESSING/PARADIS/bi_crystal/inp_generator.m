@@ -13,19 +13,22 @@ rng(42); % for reproducibility
 %  1. USER INPUT PARAMETERS
 %  ========================================================================
 
-config.maxstep=1; % Set to 1 to run DDM; use >1 to run pure ParaDiS without DDM
+
+config.test_paradis_only = false;
+
 
 % --- Script Execution Control ---
-config.num_files_to_generate = 8;
+config.num_files_to_generate = 1;
 config.enable_plotting = true;
 
 
 % --- Crystal Structure & Material ---
-config.crystalStructure = 'FCC';
-config.mobilityLaw = 'FCC_0';
+config.crystalStructure = 'HCP';
+config.mobilityLaw = 'HCP_linear';
 
 % --- Bicrystal Rotation (Bunge Euler Angles) ---
 bunge_phi1 = 45.0; bunge_PHI = 54.74; bunge_phi2 = 0.0; % In DEGREES
+bunge_phi1 = 0.0; bunge_PHI = 90.0; bunge_phi2 = 0.0; % For HCP soft grain
 config.R = bunge_euler_to_matrix(deg2rad(bunge_phi1), deg2rad(bunge_PHI), deg2rad(bunge_phi2));
 config.R = (config.R)';
 
@@ -43,7 +46,7 @@ config.maxSeg_b = 391.236307;
 config.minSeg_b = 78.247261;
 
 %
-config.name = 'D1750';
+config.name = 'D1750_Ti';
 
 
 % --- Material and Mobility Parameters ---
@@ -131,8 +134,7 @@ config.fmCorrectionTbl="inputs/fm-ctab.Ta.600K.0GPa.m2.t5.data";
 config.Rijmfile="inputs/Rijm.cube.out"; config.RijmPBCfile="inputs/RijmPBC.cube.out";
 config.winDefaultsFile="inputs/paradis.xdefaults.thinfilm"; config.useLabFrame=1;
 config.TempK=300; config.pressure=0.0; config.loadType=1;
-config.appliedStress=[0;0;0;0;0;0]; config.eRate=1e+10; config.indxErate=0;
-config.edotdir=[1.0;0.0;0.0]; config.vacancyConc=-1.0;
+config.appliedStress=[0;0;0;0;0;0]; config.indxErate=0; config.vacancyConc=-1.0;
 config.vacancyConcEquilibrium=-1.0; config.MobClimb=1e-08;
 config.MobGlide=1e-08; config.includeInertia=0; config.massDensity=-1.0;
 config.armfile=1; config.armfilefreq=1; config.savecn=1; config.savecnfreq=1;
@@ -143,6 +145,17 @@ config.writeFluxFullDecompTotals=1; config.writeFluxSimpleTotals=1;
 config.writeFluxFreq=1; config.FEM_DD_ForceSegTol=2000;
 config.enforceGlidePlanes=1; config.enableCrossSlip=0;
 config.TensionFactor=1.0; config.elasticinteraction=1;
+
+
+if config.test_paradis_only
+    config.maxstep=100;
+    config.edotdir=[1.0;0.0;0.0];
+    config.eRate=1e+10;
+else
+    config.maxstep=1;
+    config.edotdir=[1.0;0.0;0.0];
+    config.eRate=0;
+end
 
 
 config.output_folder = 'output';
@@ -223,7 +236,7 @@ for i_file = 1:config.num_files_to_generate
     
     % 파일 생성 함수 호출
     write_paradis_control_file(ctrl_path, config, base_filename);
-    write_paradis_data_file(data_path, rn, links, box_b);
+    write_paradis_data_file(config, data_path, rn, links, box_b);
     end
     
     if config.enable_plotting, plot_bicrystal(rn, links, box_b, config); end
@@ -240,132 +253,256 @@ end
 
 function systems = get_slip_systems(config)
     crystal_structure = config.crystalStructure;
-    systems = struct('b', {}, 'n', {});
-    switch upper(crystal_structure)
-        case 'FCC', planes = [[1 1 1]; [1 1 -1]; [1 -1 1]; [-1 1 1]]; dirs = [[1 -1 0];[1 1 0];[1 0 -1];[1 0 1];[0 1 -1];[0 1 1]];
-        case 'BCC', planes = [[1 1 0];[1 -1 0];[1 0 1];[1 0 -1];[0 1 1];[0 1 -1]]; dirs = [[1 1 1];[1 1 -1];[1 -1 1];[-1 1 1]];
-        case 'HCP'
-
-            c_a = config.cOVERa; % c/a ratio
-            systems = struct('b', {}, 'n', {});
-
-            %% === Basal slip systems ===
-            % (0001) plane, <11-20> directions
-            basal_dirs = [
-                1 0 0;
-                -1/2 sqrt(3)/2 0;
-                -1/2 -sqrt(3)/2 0
-            ];
-            basal_n = [0 0 1];
-            for i = 1:3
-                systems(end+1).b = basal_dirs(i,:);
-                systems(end).n   = basal_n;
-            end
-
-            %% === Prismatic slip systems ===
-            % 3 prismatic planes with a, a+c, and c directions
-
-            % Plane 1
-            n1 = [ sqrt(3)/2, -1/2, 0];
-            b1_a  = [-1/2, -sqrt(3)/2, 0];
-            b1_ac = b1_a + [0 0 c_a];
-            b1_c  = [0 0 c_a];
-
-            systems(end+1).b = b1_a; systems(end).n = n1;
-            systems(end+1).b = b1_ac; systems(end).n = n1;
-            systems(end+1).b = b1_c; systems(end).n = n1;
-
-            % Plane 2
-            n2 = [0 1 0];
-            b2_a  = [1 0 0];
-            b2_ac = b2_a + [0 0 c_a];
-            b2_c  = [0 0 c_a];
-
-            systems(end+1).b = b2_a; systems(end).n = n2;
-            systems(end+1).b = b2_ac; systems(end).n = n2;
-            systems(end+1).b = b2_c; systems(end).n = n2;
-
-            % Plane 3
-            n3 = [-sqrt(3)/2, -1/2, 0];
-            b3_a  = [1/2, -sqrt(3)/2, 0];
-            b3_ac = b3_a + [0 0 c_a];
-            b3_c  = [0 0 c_a];
-
-            systems(end+1).b = b3_a; systems(end).n = n3;
-            systems(end+1).b = b3_ac; systems(end).n = n3;
-            systems(end+1).b = b3_c; systems(end).n = n3;
-
-            %% === Pyramidal-I slip systems (a-type) ===
-            % Pyramidal-I a-type
-            n = [1 0 c_a];  % first-order pyramidal plane
-            b = [1 0 0];    % a-direction
-            systems(end+1).b = b;
-            systems(end).n = n / norm(n);
-
-            % Pyramidal-I c+a-type
-            b_ca = [1 0 c_a];
-            systems(end+1).b = b_ca;
-            systems(end).n = n / norm(n);
-
-
-            %% === Pyramidal-II slip system (c+a type) ===
-            b_ca = [1 0 c_a]; 
-            n_ca = [1 1 2*c_a]; n_ca = n_ca / norm(n_ca);
-            systems(end+1).b = b_ca;
-            systems(end).n   = n_ca;
-
-            planes = [];
-            dirs = [];
-            for i=1:size(systems, 1)
-                planes(end+1, :) = systems(i).n; % Collect all normals
-                dirs(end+1, :) = systems(i).b; % Collect all Burgers vectors
-            end
-
-        otherwise, error('Unsupported crystal structure');
-    end
-    for p=1:size(planes,1), for d=1:size(dirs,1), if abs(dot(planes(p,:),dirs(d,:)))<1e-9, systems(end+1).b=dirs(d,:)/norm(dirs(d,:)); systems(end).n=planes(p,:)/norm(planes(p,:)); end, end, end
-end
-
-function write_paradis_data_file(fname, rn, links, box_b)
-    Nnodes = size(rn, 1); LINKMAX = size(links, 1);
-    half_box_b = box_b / 2;
-    list = cell(Nnodes, 1);
-    for j=1:LINKMAX, n0=links(j,1); n1=links(j,2); list{n0}=[list{n0},j]; list{n1}=[list{n1},j]; end
-    fid = fopen(fname, 'w'); if fid == -1, error('Cannot open file: %s', fname); end
     
-    fprintf(fid, '#\n#\tParaDiS nodal data file (by write_loop_data.m) \n#\n \ndataFileVersion = 4\n');
-    fprintf(fid, 'numFileSegments = 1\n');
+    % Initialize the struct array
+    systems = struct('b', {}, 'n', {});
 
-    max_half_box_size = max(half_box_b);
+    if strcmpi(crystal_structure, 'HCP')
+        c_a = config.cOVERa;
+        a = 1.0; 
+        c = c_a * a;
 
-    fprintf(fid, 'minCoordinates = [\n %e\n %e\n %e\n ]\n', -max_half_box_size, -max_half_box_size, -max_half_box_size);
-    fprintf(fid, 'maxCoordinates = [\n %e\n %e\n %e\n ]\n',  max_half_box_size, max_half_box_size, max_half_box_size);
-    fprintf(fid, 'nodeCount = %d\n', Nnodes);
-    fprintf(fid, 'dataDecompType = 1\n');
-    fprintf(fid, 'dataDecompGeometry = [\n 1\n 1\n 1\n ]\n');
-    fprintf(fid, 'domainDecomposition = \n %e\n     %e\n         %e\n         %e\n     %e\n %e\n \n',...
-        -max_half_box_size, -max_half_box_size, -max_half_box_size, ...
-        max_half_box_size, max_half_box_size, max_half_box_size);
-    fprintf(fid, '#\n#\tPrimary lines: node_tag, x, y, z, num_arms, constraint\n');
-    fprintf(fid, '#\tSecondary lines: arm_tag, burgx, burgy, burgz, nx, ny, nz\n#\n');
-    fprintf(fid, '#       length in unit of burgMag\n \nnodalData =\n');
+        % --- Base Cartesian Vectors for burgers and normals ---
+        % a-type vectors <11-20>/3 type
+        b1 = [a, 0, 0];
+        b2 = [-a/2, a*sqrt(3)/2, 0];
+        b3 = [-a/2, -a*sqrt(3)/2, 0];
+        
+        % <c+a>-type vectors <11-23>/3 type
+        b4 = [a, 0, c];
+        b5 = [-a/2,  a*sqrt(3)/2, c];
+        b6 = [-a/2, -a*sqrt(3)/2, c];
+        b7 = [a, 0, -c];
+        b8 = [-a/2,  a*sqrt(3)/2, -c];
+        b9 = [-a/2, -a*sqrt(3)/2, -c];
 
-    for i = 1:Nnodes
-        numNbrs = length(list{i}); constraint = rn(i, 4);
-        node_pos_b = rn(i, 1:3);
-        fprintf(fid, '     %d,%-12d% 21.14e % 21.14e % 21.14e %d %d\n', ...
-                 0, i-1, node_pos_b(1), node_pos_b(2), node_pos_b(3), numNbrs, constraint);
-        for j = 1:numNbrs
-            link_idx = list{i}(j); n0 = links(link_idx,1); n1 = links(link_idx,2);
-            bv = links(link_idx, 3:5); nv = links(link_idx, 6:8);
-            if n0 == i, neighbor_node_idx = n1; else, neighbor_node_idx = n0; bv = -bv; end
-            fprintf(fid, '           %d,%-12d %-9.6f %-9.6f %-9.6f\n', ...
-                     0, neighbor_node_idx-1, bv(1), bv(2), bv(3));
-            fprintf(fid, '                 %-9.6f %-9.6f %-9.6f\n', ...
-                     nv(1), nv(2), nv(3));
+        % <c>-type Burgers vector [0001]
+        b10 = [0, 0, c];
+
+        % --- Slip Plane Normals ---
+        % Basal (0001)
+        n_basal = [0, 0, 1];
+        % Prismatic {10-10}
+        n_pr1 = [0, 1, 0]; n_pr2 = [sqrt(3)/2, -1/2, 0]; n_pr3 = [-sqrt(3)/2, -1/2, 0];
+        % 1st Pyramidal {10-11}
+        n_pyI1 = [0, -2*c/a, sqrt(3)]; n_pyI2 = [0, 2*c/a, sqrt(3)];
+        n_pyI3 = [-sqrt(3)*c/a, -c/a, -sqrt(3)]; n_pyI4 = [sqrt(3)*c/a, c/a, -sqrt(3)];
+        n_pyI5 = [sqrt(3)*c/a, -c/a, sqrt(3)]; n_pyI6 = [-sqrt(3)*c/a, c/a, sqrt(3)];
+        % 2nd Pyramidal {11-22}
+        n_pII1 = [a, 0, -c]; n_pII2 = [-a/2, a*sqrt(3)/2, -c]; n_pII3 = [-a/2, -a*sqrt(3)/2, -c];
+        n_pII4 = [-a, 0, c]; n_pII5 = [a/2, -a*sqrt(3)/2, c]; n_pII6 = [a/2, a*sqrt(3)/2, c];
+
+        % =====================================================================
+        % Add systems with orthogonality check
+        % =====================================================================
+        
+        % Table 1: Burgers vectors of type <a> (Total: 12 systems)
+        % Basal (3 systems)
+        add_system_if_orthogonal(b1, n_basal);
+        add_system_if_orthogonal(b2, n_basal);
+        add_system_if_orthogonal(b3, n_basal);
+
+        % Prismatic (3 systems)
+        add_system_if_orthogonal(b1, n_pr1);
+        add_system_if_orthogonal(b3, n_pr2);
+        add_system_if_orthogonal(b2, n_pr3);
+
+        % 1st Pyramidal (6 systems)
+        add_system_if_orthogonal(b1, n_pyI1); add_system_if_orthogonal(b1, n_pyI2);
+        add_system_if_orthogonal(b2, n_pyI3); add_system_if_orthogonal(b2, n_pyI4);
+        add_system_if_orthogonal(b3, n_pyI5); add_system_if_orthogonal(b3, n_pyI6);
+
+        % Table 2: Burgers vectors of type <c+a> (Total: 24 systems)
+        % Prismatic (6 systems)
+        add_system_if_orthogonal(b4, n_pr1); add_system_if_orthogonal(b7, n_pr1);
+        add_system_if_orthogonal(b5, n_pr3); add_system_if_orthogonal(b8, n_pr3);
+        add_system_if_orthogonal(b6, n_pr2); add_system_if_orthogonal(b9, n_pr2);
+        
+        % 1st Pyramidal (12 systems)
+        add_system_if_orthogonal(b5, n_pyI1); add_system_if_orthogonal(b6, n_pyI1);
+        add_system_if_orthogonal(b8, n_pyI2); add_system_if_orthogonal(b9, n_pyI2);
+        add_system_if_orthogonal(b6, n_pyI3); add_system_if_orthogonal(b7, n_pyI3);
+        add_system_if_orthogonal(b5, n_pyI4); add_system_if_orthogonal(b4, n_pyI4);
+        add_system_if_orthogonal(b4, n_pyI5); add_system_if_orthogonal(b8, n_pyI5);
+        add_system_if_orthogonal(b7, n_pyI6); add_system_if_orthogonal(b9, n_pyI6);
+
+        % 2nd Pyramidal (6 systems)
+        add_system_if_orthogonal(b5, n_pII1);
+        add_system_if_orthogonal(b6, n_pII2);
+        add_system_if_orthogonal(b4, n_pII3);
+        add_system_if_orthogonal(b8, n_pII4);
+        add_system_if_orthogonal(b9, n_pII5);
+        add_system_if_orthogonal(b7, n_pII6);
+        
+        % Table 3: Burgers vector of type <c> (Total: 3 systems)
+        add_system_if_orthogonal(b10, n_pr1);
+        add_system_if_orthogonal(b10, n_pr2);
+        add_system_if_orthogonal(b10, n_pr3);
+
+    else % FCC or BCC Logic (Unchanged)
+        if strcmpi(crystal_structure, 'FCC')
+            planes = [[1 1 1]; [1 1 -1]; [1 -1 1]; [-1 1 1]];
+            dirs = [[1 -1 0]; [1 1 0]; [1 0 -1]; [1 0 1]; [0 1 -1]; [0 1 1]];
+        elseif strcmpi(crystal_structure, 'BCC')
+            planes = [[1 1 0]; [1 -1 0]; [1 0 1]; [1 0 -1]; [0 1 1]; [0 1 -1]];
+            dirs = [[1 1 1]; [1 1 -1]; [1 -1 1]; [-1 1 1]];
+        else
+             error('Unsupported crystal structure: %s', crystal_structure);
+        end
+        for p = 1:size(planes,1)
+            for d = 1:size(dirs,1)
+                if abs(dot(planes(p,:), dirs(d,:))) < 1e-9
+                    systems(end+1).b = dirs(d,:) / norm(dirs(d,:));
+                    systems(end).n = planes(p,:) / norm(planes(p,:));
+                end
+            end
         end
     end
-    fclose(fid); fprintf('ParaDiS data file written to: %s\n', fname);
+    
+    % --- Nested helper function for orthogonality check and addition ---
+    function add_system_if_orthogonal(b_vec, n_vec)
+        if abs(dot(b_vec, n_vec)) > 1e-9
+            fprintf('WARNING: Non-orthogonal pair skipped. dot(b,n) = %.4f\n', dot(b_vec, n_vec));
+            fprintf('  b = [%.4f, %.4f, %.4f]\n', b_vec);
+            fprintf('  n = [%.4f, %.4f, %.4f]\n', n_vec);
+        else
+            systems(end+1).b = b_vec;
+            systems(end).n = n_vec / norm(n_vec);
+        end
+    end
+end
+function write_paradis_data_file(config, fname, rn, links, box_b)
+
+    if strcmp(config.crystalStructure, 'HCP')
+        Nnodes = size(rn, 1);
+        LINKMAX = size(links, 1);
+        half_box_b = box_b / 2;
+        
+        list = cell(Nnodes, 1);
+        for j = 1:LINKMAX
+            n0 = links(j, 1);
+            n1 = links(j, 2);
+            list{n0} = [list{n0}, j];
+            list{n1} = [list{n1}, j];
+        end
+        
+        fid = fopen(fname, 'w');
+        if fid == -1, error('Cannot open file: %s', fname); end
+
+        if config.test_paradis_only
+            max_half_box_size = max(half_box_b)*4;
+        else
+            max_half_box_size = max(half_box_b);
+        end
+    
+        
+        % Corrected Header for v5 format
+        fprintf(fid, 'dataFileVersion =   5\n');
+        fprintf(fid, 'numFileSegments =   1\n');
+        fprintf(fid, 'minCoordinates = [\n  %e\n  %e\n  %e\n  ]\n', -max_half_box_size, -max_half_box_size, -max_half_box_size);
+        fprintf(fid, 'maxCoordinates = [\n  %e\n  %e\n  %e\n  ]\n',  max_half_box_size, max_half_box_size, max_half_box_size);
+        fprintf(fid, 'nodeCount =   %d\n', Nnodes);
+        fprintf(fid, 'dataDecompType =   2\n');
+        fprintf(fid, 'dataDecompGeometry = [\n  1\n  1\n  1\n  ]\n\n');
+        
+        fprintf(fid, '#\n#  END OF DATA FILE PARAMETERS\n#\n\n');
+        
+        % Corrected Domain Decomposition format
+        fprintf(fid, 'domainDecomposition = \n');
+        fprintf(fid, '# Dom_ID  Minimum XYZ bounds   Maximum XYZ bounds\n');
+        fprintf(fid, '  0   %.4f  %.4f  %.4f    %.4f   %.4f   %.4f\n', ...
+            -max_half_box_size, -max_half_box_size, -max_half_box_size, ...
+             max_half_box_size,  max_half_box_size,  max_half_box_size);
+             
+        fprintf(fid, 'nodalData = \n');
+        fprintf(fid, '#  Primary lines: node_tag, x, y, z, num_arms, constraint\n');
+        fprintf(fid, '#  Secondary lines: arm_tag, burgx, burgy, burgz, nx, ny, nz\n');
+    
+        for i = 1:Nnodes
+            numNbrs = length(list{i});
+            constraint = rn(i, 4);
+            node_pos_b = rn(i, 1:3);
+            
+            % Primary Line
+            fprintf(fid, ' 9,%d %.4f %.4f %.4f %d %d\n', ...
+                     i-1, node_pos_b(1), node_pos_b(2), node_pos_b(3), numNbrs, constraint);
+            
+            for j = 1:numNbrs
+                link_idx = list{i}(j);
+                n0 = links(link_idx, 1);
+                n1 = links(link_idx, 2);
+                bv = links(link_idx, 3:5);
+                nv = links(link_idx, 6:8);
+                
+                if n0 == i
+                    neighbor_node_idx = n1;
+                else
+                    neighbor_node_idx = n0;
+                    bv = -bv; % Reverse Burgers vector for the opposite direction
+                end
+                
+                % Secondary Lines (matching Be.txt format)
+                fprintf(fid, '   9,%d %e %e %e\n', ...
+                         neighbor_node_idx-1, bv(1), bv(2), bv(3));
+                fprintf(fid, '       %e %e %e\n', ...
+                         nv(1), nv(2), nv(3));
+            end
+        end
+        
+        fclose(fid);
+        fprintf('ParaDiS data file (v5 format) written to: %s\n', fname);
+    else
+
+        Nnodes = size(rn, 1); LINKMAX = size(links, 1);
+        half_box_b = box_b / 2;
+        list = cell(Nnodes, 1);
+        for j=1:LINKMAX, n0=links(j,1); n1=links(j,2); list{n0}=[list{n0},j]; list{n1}=[list{n1},j]; end
+        fid = fopen(fname, 'w'); if fid == -1, error('Cannot open file: %s', fname); end
+        
+        fprintf(fid, '#\n#\tParaDiS nodal data file (by write_loop_data.m) \n#\n \ndataFileVersion = 4\n');
+        fprintf(fid, 'numFileSegments = 1\n');
+    
+        if config.test_paradis_only
+            max_half_box_size = max(half_box_b)*10;
+        else
+            max_half_box_size = max(half_box_b);
+        end
+    
+        fprintf(fid, 'minCoordinates = [\n %e\n %e\n %e\n ]\n', -max_half_box_size, -max_half_box_size, -max_half_box_size);
+        fprintf(fid, 'maxCoordinates = [\n %e\n %e\n %e\n ]\n',  max_half_box_size, max_half_box_size, max_half_box_size);
+        fprintf(fid, 'nodeCount = %d\n', Nnodes);
+        fprintf(fid, 'dataDecompType = 1\n');
+        fprintf(fid, 'dataDecompGeometry = [\n 1\n 1\n 1\n ]\n');
+        fprintf(fid, 'domainDecomposition = \n %e\n     %e\n         %e\n         %e\n     %e\n %e\n \n',...
+            -max_half_box_size, -max_half_box_size, -max_half_box_size, ...
+            max_half_box_size, max_half_box_size, max_half_box_size);
+        fprintf(fid, '#\n#\tPrimary lines: node_tag, x, y, z, num_arms, constraint\n');
+        fprintf(fid, '#\tSecondary lines: arm_tag, burgx, burgy, burgz, nx, ny, nz\n#\n');
+        fprintf(fid, '#       length in unit of burgMag\n \nnodalData =\n');
+    
+        for i = 1:Nnodes
+            numNbrs = length(list{i}); constraint = rn(i, 4);
+            node_pos_b = rn(i, 1:3);
+            fprintf(fid, '     %d,%-12d% 21.14e % 21.14e % 21.14e %d %d\n', ...
+                     0, i-1, node_pos_b(1), node_pos_b(2), node_pos_b(3), numNbrs, constraint);
+            for j = 1:numNbrs
+                link_idx = list{i}(j); n0 = links(link_idx,1); n1 = links(link_idx,2);
+                bv = links(link_idx, 3:5); nv = links(link_idx, 6:8);
+                if n0 == i, neighbor_node_idx = n1; else, neighbor_node_idx = n0; bv = -bv; end
+                fprintf(fid, '           %d,%-12d %-9.6f %-9.6f %-9.6f\n', ...
+                         0, neighbor_node_idx-1, bv(1), bv(2), bv(3));
+                fprintf(fid, '                 %-9.6f %-9.6f %-9.6f\n', ...
+                         nv(1), nv(2), nv(3));
+            end
+        end
+        fclose(fid); fprintf('ParaDiS data file written to: %s\n', fname);
+
+
+
+    end
+    
+
+
 end
 
 function write_paradis_control_file(fname, config, base_filename)
