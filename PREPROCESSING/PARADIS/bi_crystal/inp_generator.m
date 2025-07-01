@@ -50,6 +50,69 @@ config.name = 'D1750';
 config.burgMag = 2.556e-10; % Meters
 config.shearModulus = 4.8e10; % Pa
 config.pois = 0.34;
+
+if strcmp(config.crystalStructure, "HCP")
+    % Be
+
+    config.rc=3.00000; 
+
+    % HCP specific parameters
+    % cOVERa, HCPEcoreA, HCPEcoreC, HCPEcoreCpA, 
+    
+    config.cOVERa = 1.58; % c/a ratio
+    config.HCPEcoreA = 18.06977e9; % Ecore energy for A
+    config.HCPEcoreC = 21.70031e9; % Ecore energy for C
+    config.HCPEcoreCpA = 7.18520e9; % Ecore energy for CpA
+    
+    % HCP_A_Basal_EdgeDrag, HCP_A_Basal_ScrewDrag,
+    % HCP_A_Prismatic_EdgeDrag, HCP_A_Prismatic_ScrewDrag,
+    % HCP_A_1stPyramidal_EdgeDrag, HCP_A_1stPyramidal_ScrewDrag,
+    % HCP_A_2ndPyramidal_EdgeDrag, HCP_A_2ndPyramidal_ScrewDrag,
+
+    config.HCP_A_Basal_EdgeDrag = 1.18434387898773e-04; % Basal edge drag
+    config.HCP_A_Basal_ScrewDrag = 1.65421659553579e-04; % Basal screw drag
+    config.HCP_A_Prismatic_EdgeDrag = 5.69513923115224e-05; % Prismatic edge drag
+    config.HCP_A_Prismatic_ScrewDrag = 7.15096201802962e-05; % Prismatic screw drag
+    config.HCP_A_1stPyramidal_EdgeDrag = 7.28268834977848e-05; % 1st Pyramidal edge drag
+    config.HCP_A_1stPyramidal_ScrewDrag = 1.05154866364405e-04; % 1st Pyramidal screw drag
+    config.HCP_A_2ndPyramidal_EdgeDrag = 7.28268834977848e-05; % 2nd Pyramidal edge drag
+    config.HCP_A_2ndPyramidal_ScrewDrag = 1.05154866364405e-04; % 2nd Pyramidal screw drag
+
+    % From polyxtal literature, values are assumed 20 times basal edge
+    % HCP_CpA_Prismatic_EdgeDrag, HCP_CpA_Prismatic_ScrewDrag,
+    % HCP_CpA_1stPyramidal_EdgeDrag, HCP_CpA_1stPyramidal_ScrewDrag,
+    % HCP_CpA_2ndPyramidal_EdgeDrag, HCP_CpA_2ndPyramidal_ScrewDrag,
+    % HCP_C_Prismatic_EdgeDrag, HCP_C_Prismatic_ScrewDrag,
+
+    
+    config.HCP_CpA_Prismatic_EdgeDrag = config.HCP_A_Basal_EdgeDrag * 20; % CpA Prismatic edge drag
+    config.HCP_CpA_Prismatic_ScrewDrag = config.HCP_A_Basal_EdgeDrag * 20; % CpA Prismatic screw drag
+    config.HCP_CpA_1stPyramidal_EdgeDrag = config.HCP_A_Basal_EdgeDrag * 20; % CpA 1st Pyramidal edge drag
+    config.HCP_CpA_1stPyramidal_ScrewDrag = config.HCP_A_Basal_EdgeDrag * 20; % CpA 1st Pyramidal screw drag
+    config.HCP_CpA_2ndPyramidal_EdgeDrag = config.HCP_A_Basal_EdgeDrag * 20; % CpA 2nd Pyramidal edge drag
+    config.HCP_CpA_2ndPyramidal_ScrewDrag = config.HCP_A_Basal_EdgeDrag * 20; % CpA 2nd Pyramidal screw drag
+    config.HCP_C_Prismatic_EdgeDrag = config.HCP_A_Basal_EdgeDrag * 20; % C Prismatic edge drag
+    config.HCP_C_Prismatic_ScrewDrag = config.HCP_A_Basal_EdgeDrag * 20; % C Prismatic screw drag
+
+    % 10000 * pyramidal
+    % HCP_Sessile_EdgeDrag, HCP_Sessile_ScrewDrag,
+    
+    config.HCP_Sessile_EdgeDrag = 10000 * config.HCP_A_1stPyramidal_EdgeDrag; % Sessile edge drag
+    config.HCP_Sessile_ScrewDrag = 10000 * config.HCP_A_1stPyramidal_ScrewDrag; % Sessile screw drag
+
+    % ~10 times lowest
+    % HCP_LineDrag
+
+    config.HCP_LineDrag = 10 * config.HCP_A_Basal_EdgeDrag; % Line drag
+
+else
+    config.rc = 0.100000; 
+
+    % FCC/BCC specific parameters
+    config.MobScrew = 1.0e+05; % Mobility for screw dislocations
+    config.MobEdge = 1.0e+05; % Mobility for edge dislocations
+    config.MobGB = 5.0; % Grain boundary mobility
+end
 config.MobScrew=1.0e+05; 
 config.MobEdge=1.0e+05; 
 config.MobGB=5.0;
@@ -59,10 +122,10 @@ config.MobGB=5.0;
 
 
 config.numXdoms=1; config.numYdoms=1; config.numZdoms=1; config.numXcells=4;
-config.numYcells=4; config.numZcells=4; config.xBoundType=1; config.yBoundType=1;
-config.zBoundType=1; config.DLBfreq=0; 
+config.numYcells=4; config.numZcells=4; config.xBoundType=0; config.yBoundType=0;
+config.zBoundType=0; config.DLBfreq=0; 
 config.timestepIntegrator='explicit'; config.maxDT=1e-12; config.rTol=15.6495;
-config.rc=0.100000; config.remeshRule=2; config.splitMultiNodeFreq=1;
+config.remeshRule=2; config.splitMultiNodeFreq=1;
 config.fmEnabled=0; config.fmMPOrder=2; config.fmTaylorOrder=5;
 config.fmCorrectionTbl="inputs/fm-ctab.Ta.600K.0GPa.m2.t5.data";
 config.Rijmfile="inputs/Rijm.cube.out"; config.RijmPBCfile="inputs/RijmPBC.cube.out";
@@ -94,7 +157,7 @@ targetDensity_b2 = config.targetDensity * config.burgMag^2;
 volume_b3 = prod(box_b);
 
 % --- Get Slip Systems ---
-slipSystems = get_slip_systems(config.crystalStructure);
+slipSystems = get_slip_systems(config);
 
 % --- Main loop ---
 for i_file = 1:config.num_files_to_generate
@@ -175,11 +238,89 @@ function R = bunge_euler_to_matrix(phi1, PHI, phi2)
     R = [c1*c2-s1*s2*c_, -c1*s2-s1*c2*c_, s1*s_; s1*c2+c1*s2*c_, -s1*s2+c1*c2*c_, -c1*s_; s2*s_, c2*s_, c_];
 end
 
-function systems = get_slip_systems(crystal_structure)
+function systems = get_slip_systems(config)
+    crystal_structure = config.crystalStructure;
     systems = struct('b', {}, 'n', {});
     switch upper(crystal_structure)
         case 'FCC', planes = [[1 1 1]; [1 1 -1]; [1 -1 1]; [-1 1 1]]; dirs = [[1 -1 0];[1 1 0];[1 0 -1];[1 0 1];[0 1 -1];[0 1 1]];
         case 'BCC', planes = [[1 1 0];[1 -1 0];[1 0 1];[1 0 -1];[0 1 1];[0 1 -1]]; dirs = [[1 1 1];[1 1 -1];[1 -1 1];[-1 1 1]];
+        case 'HCP'
+
+            c_a = config.cOVERa; % c/a ratio
+            systems = struct('b', {}, 'n', {});
+
+            %% === Basal slip systems ===
+            % (0001) plane, <11-20> directions
+            basal_dirs = [
+                1 0 0;
+                -1/2 sqrt(3)/2 0;
+                -1/2 -sqrt(3)/2 0
+            ];
+            basal_n = [0 0 1];
+            for i = 1:3
+                systems(end+1).b = basal_dirs(i,:);
+                systems(end).n   = basal_n;
+            end
+
+            %% === Prismatic slip systems ===
+            % 3 prismatic planes with a, a+c, and c directions
+
+            % Plane 1
+            n1 = [ sqrt(3)/2, -1/2, 0];
+            b1_a  = [-1/2, -sqrt(3)/2, 0];
+            b1_ac = b1_a + [0 0 c_a];
+            b1_c  = [0 0 c_a];
+
+            systems(end+1).b = b1_a; systems(end).n = n1;
+            systems(end+1).b = b1_ac; systems(end).n = n1;
+            systems(end+1).b = b1_c; systems(end).n = n1;
+
+            % Plane 2
+            n2 = [0 1 0];
+            b2_a  = [1 0 0];
+            b2_ac = b2_a + [0 0 c_a];
+            b2_c  = [0 0 c_a];
+
+            systems(end+1).b = b2_a; systems(end).n = n2;
+            systems(end+1).b = b2_ac; systems(end).n = n2;
+            systems(end+1).b = b2_c; systems(end).n = n2;
+
+            % Plane 3
+            n3 = [-sqrt(3)/2, -1/2, 0];
+            b3_a  = [1/2, -sqrt(3)/2, 0];
+            b3_ac = b3_a + [0 0 c_a];
+            b3_c  = [0 0 c_a];
+
+            systems(end+1).b = b3_a; systems(end).n = n3;
+            systems(end+1).b = b3_ac; systems(end).n = n3;
+            systems(end+1).b = b3_c; systems(end).n = n3;
+
+            %% === Pyramidal-I slip systems (a-type) ===
+            % Pyramidal-I a-type
+            n = [1 0 c_a];  % first-order pyramidal plane
+            b = [1 0 0];    % a-direction
+            systems(end+1).b = b;
+            systems(end).n = n / norm(n);
+
+            % Pyramidal-I c+a-type
+            b_ca = [1 0 c_a];
+            systems(end+1).b = b_ca;
+            systems(end).n = n / norm(n);
+
+
+            %% === Pyramidal-II slip system (c+a type) ===
+            b_ca = [1 0 c_a]; 
+            n_ca = [1 1 2*c_a]; n_ca = n_ca / norm(n_ca);
+            systems(end+1).b = b_ca;
+            systems(end).n   = n_ca;
+
+            planes = [];
+            dirs = [];
+            for i=1:size(systems, 1)
+                planes(end+1, :) = systems(i).n; % Collect all normals
+                dirs(end+1, :) = systems(i).b; % Collect all Burgers vectors
+            end
+
         otherwise, error('Unsupported crystal structure');
     end
     for p=1:size(planes,1), for d=1:size(dirs,1), if abs(dot(planes(p,:),dirs(d,:)))<1e-9, systems(end+1).b=dirs(d,:)/norm(dirs(d,:)); systems(end).n=planes(p,:)/norm(planes(p,:)); end, end, end
@@ -234,6 +375,8 @@ function write_paradis_control_file(fname, config, base_filename)
     fprintf(fid, '###  ParaDiS control parameter file  ###\n###                                  ###\n');
     fprintf(fid, '########################################\n\n');
     fprintf(fid, 'dirname    = %s_results\n\n', ['tests/', base_filename]);
+
+
     fprintf(fid, '# Simulation cell and processor setup\n\n');
     fprintf(fid, 'numXdoms            = %d\n', config.numXdoms);
     fprintf(fid, 'numYdoms            = %d\n', config.numYdoms);
@@ -245,26 +388,36 @@ function write_paradis_control_file(fname, config, base_filename)
     fprintf(fid, 'yBoundType          = %d\n', config.yBoundType);
     fprintf(fid, 'zBoundType          = %d\n', config.zBoundType);
     fprintf(fid, 'DLBfreq             = %d\n\n', config.DLBfreq);
+
+
     fprintf(fid, '# Simulation time and timestepping controls\n\n');
     fprintf(fid, 'maxstep             = %d\n', config.maxstep);
     fprintf(fid, 'timestepIntegrator  = "%s"\n', config.timestepIntegrator);
     fprintf(fid, 'maxDT               = %e\n\n', config.maxDT);
     fprintf(fid, 'rTol                = %f\n', config.rTol);
     fprintf(fid, 'rc                  = %f\n\n', config.rc);
+
+
     fprintf(fid, '# Discretization and topological change controls\n\n');
     fprintf(fid, 'maxSeg              = %f\n', config.maxSeg_b);
     fprintf(fid, 'minSeg              = %f\n', config.minSeg_b);
     fprintf(fid, 'remeshRule          = %d\n', config.remeshRule);
     fprintf(fid, 'splitMultiNodeFreq  = %d\n\n', config.splitMultiNodeFreq);
+
+
     fprintf(fid, '# Fast multipole method specs.\n\n');
     fprintf(fid, 'fmEnabled           = %d\n', config.fmEnabled);
     fprintf(fid, 'fmMPOrder           = %d\n', config.fmMPOrder);
     fprintf(fid, 'fmTaylorOrder       = %d\n', config.fmTaylorOrder);
     fprintf(fid, 'fmCorrectionTbl     = "%s"\n\n', config.fmCorrectionTbl);
+
+
     fprintf(fid, '# Tables for non-FMM far-field force calcs.\n\n');
     fprintf(fid, 'Rijmfile            = "%s"\n', config.Rijmfile);
     fprintf(fid, 'RijmPBCfile         = "%s"\n', config.RijmPBCfile);
     fprintf(fid, 'winDefaultsFile     = "%s"\n\n', config.winDefaultsFile);
+
+
     fprintf(fid, '# Lab Frame\n\n');
     fprintf(fid, 'useLabFrame         = %d\n\n', config.useLabFrame);
     if config.useLabFrame == 1 && isfield(config, 'R')
@@ -275,6 +428,8 @@ function write_paradis_control_file(fname, config, base_filename)
         fprintf(fid, '  ]\n');
     end
     fprintf(fid, '\n');
+
+    
     fprintf(fid, '# Loading conditions\n#\n');
     fprintf(fid, 'TempK               = %f\n', config.TempK);
     fprintf(fid, 'pressure            = %f\n', config.pressure);
@@ -283,6 +438,8 @@ function write_paradis_control_file(fname, config, base_filename)
     fprintf(fid, 'eRate               = %e\n', config.eRate);
     fprintf(fid, 'indxErate           = %d\n', config.indxErate);
     fprintf(fid, 'edotdir = [ \n  %.1f\n  %.1f\n  %.1f\n  ]\n\n', config.edotdir);
+
+
     fprintf(fid, '# Material and mobility parameters\n\n');
     fprintf(fid, 'mobilityLaw     = "%s"\n', config.mobilityLaw);
     fprintf(fid, 'vacancyConc         = %f\n', config.vacancyConc);
@@ -290,13 +447,66 @@ function write_paradis_control_file(fname, config, base_filename)
     fprintf(fid, 'shearModulus        = %e\n', config.shearModulus);
     fprintf(fid, 'pois                = %f\n', config.pois);
     fprintf(fid, 'burgMag             = %e\n\n', config.burgMag);
-    fprintf(fid, 'MobScrew            = %e\n', config.MobScrew);
-    fprintf(fid, 'MobEdge             = %e\n', config.MobEdge);
-    fprintf(fid, 'MobGB               = %f\n\n', config.MobGB);
-    fprintf(fid, 'MobClimb            = %e\n', config.MobClimb);
-    fprintf(fid, 'MobGlide            = %e\n\n', config.MobGlide);
-    fprintf(fid, 'includeInertia      = %d\n', config.includeInertia);
-    fprintf(fid, 'massDensity         = %f\n\n', config.massDensity);
+
+    if strcmp(config.crystalStructure, "HCP")
+        % cOVERa, HCPEcoreA, HCPEcoreC, HCPEcoreCpA, 
+        % HCP_A_Basal_EdgeDrag, HCP_A_Basal_ScrewDrag,
+        % HCP_A_Prismatic_EdgeDrag, HCP_A_Prismatic_ScrewDrag,
+        % HCP_A_1stPyramidal_EdgeDrag, HCP_A_1stPyramidal_ScrewDrag,
+        % HCP_A_2ndPyramidal_EdgeDrag, HCP_A_2ndPyramidal_ScrewDrag,
+
+        fprintf(fid, 'cOVERa              = %f\n', config.cOVERa);
+        fprintf(fid, 'HCPEcoreA           = %e\n', config.HCPEcoreA);
+        fprintf(fid, 'HCPEcoreC           = %e\n', config.HCPEcoreC);
+        fprintf(fid, 'HCPEcoreCpA         = %e\n\n', config.HCPEcoreCpA);
+        fprintf(fid, 'HCP_A_Basal_EdgeDrag = %e\n', config.HCP_A_Basal_EdgeDrag);
+        fprintf(fid, 'HCP_A_Basal_ScrewDrag = %e\n', config.HCP_A_Basal_ScrewDrag);
+        fprintf(fid, 'HCP_A_Prismatic_EdgeDrag = %e\n', config.HCP_A_Prismatic_EdgeDrag);
+        fprintf(fid, 'HCP_A_Prismatic_ScrewDrag = %e\n', config.HCP_A_Prismatic_ScrewDrag);
+        fprintf(fid, 'HCP_A_1stPyramidal_EdgeDrag = %e\n', config.HCP_A_1stPyramidal_EdgeDrag);
+        fprintf(fid, 'HCP_A_1stPyramidal_ScrewDrag = %e\n', config.HCP_A_1stPyramidal_ScrewDrag);
+        fprintf(fid, 'HCP_A_2ndPyramidal_EdgeDrag = %e\n', config.HCP_A_2ndPyramidal_EdgeDrag);
+        fprintf(fid, 'HCP_A_2ndPyramidal_ScrewDrag = %e\n', config.HCP_A_2ndPyramidal_ScrewDrag);
+
+
+        % From polyxtal literature, values are assumed 20 times basal edge
+        % HCP_CpA_Prismatic_EdgeDrag, HCP_CpA_Prismatic_ScrewDrag,
+        % HCP_CpA_1stPyramidal_EdgeDrag, HCP_CpA_1stPyramidal_ScrewDrag,
+        % HCP_CpA_2ndPyramidal_EdgeDrag, HCP_CpA_2ndPyramidal_ScrewDrag,
+        % HCP_C_Prismatic_EdgeDrag, HCP_C_Prismatic_ScrewDrag,
+
+        fprintf(fid, 'HCP_CpA_Prismatic_EdgeDrag = %e\n', config.HCP_CpA_Prismatic_EdgeDrag);
+        fprintf(fid, 'HCP_CpA_Prismatic_ScrewDrag = %e\n', config.HCP_CpA_Prismatic_ScrewDrag);
+        fprintf(fid, 'HCP_CpA_1stPyramidal_EdgeDrag = %e\n', config.HCP_CpA_1stPyramidal_EdgeDrag);
+        fprintf(fid, 'HCP_CpA_1stPyramidal_ScrewDrag = %e\n', config.HCP_CpA_1stPyramidal_ScrewDrag);
+        fprintf(fid, 'HCP_CpA_2ndPyramidal_EdgeDrag = %e\n', config.HCP_CpA_2ndPyramidal_EdgeDrag);
+        fprintf(fid, 'HCP_CpA_2ndPyramidal_ScrewDrag = %e\n', config.HCP_CpA_2ndPyramidal_ScrewDrag);
+        fprintf(fid, 'HCP_C_Prismatic_EdgeDrag = %e\n', config.HCP_C_Prismatic_EdgeDrag);
+        fprintf(fid, 'HCP_C_Prismatic_ScrewDrag = %e\n\n', config.HCP_C_Prismatic_ScrewDrag);
+
+
+        % 10000 * pyramidal
+        % HCP_Sessile_EdgeDrag, HCP_Sessile_ScrewDrag,
+
+        fprintf(fid, 'HCP_Sessile_EdgeDrag = %e\n', config.HCP_Sessile_EdgeDrag);
+        fprintf(fid, 'HCP_Sessile_ScrewDrag = %e\n\n', config.HCP_Sessile_ScrewDrag);
+
+        % ~10 times lowest
+        % HCP_LineDrag
+        fprintf(fid, 'HCP_LineDrag = %e\n\n', config.HCP_LineDrag);
+
+
+    else
+        fprintf(fid, 'MobScrew            = %e\n', config.MobScrew);
+        fprintf(fid, 'MobEdge             = %e\n', config.MobEdge);
+        fprintf(fid, 'MobGB               = %f\n\n', config.MobGB);
+        fprintf(fid, 'MobClimb            = %e\n', config.MobClimb);
+        fprintf(fid, 'MobGlide            = %e\n\n', config.MobGlide);
+        fprintf(fid, 'includeInertia      = %d\n', config.includeInertia);
+        fprintf(fid, 'massDensity         = %f\n\n', config.massDensity);
+    end
+
+
     fprintf(fid, '# I/O controls and parameters\n\n');
     fprintf(fid, 'armfile             = %d\n', config.armfile);
     fprintf(fid, 'armfilefreq         = %d\n\n', config.armfilefreq);
@@ -313,6 +523,8 @@ function write_paradis_control_file(fname, config, base_filename)
     fprintf(fid, 'writeFluxFullDecompTotals = %d\n', config.writeFluxFullDecompTotals);
     fprintf(fid, 'writeFluxSimpleTotals = %d\n', config.writeFluxSimpleTotals);
     fprintf(fid, 'writeFluxFreq       = %d\n\n', config.writeFluxFreq);
+
+
     fprintf(fid, '# Miscellaneous parameters\n\n');
     fprintf(fid, 'FEM_DD_ForceSegTol  = %f\n', config.FEM_DD_ForceSegTol);
     fprintf(fid, 'enforceGlidePlanes  = %d\n', config.enforceGlidePlanes);

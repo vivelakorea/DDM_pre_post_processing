@@ -15,7 +15,7 @@
   - 목표 전위 밀도 달성 시까지 무작위 소스 배치
   - ParaDiS 실행용 초기 상태 생성
 
-📄 자세한 설명: [`README.md`](./PREPROCESSING/PARADIS/README.md)
+📄 자세한 설명: [`README.md`](./PREPROCESSING/PARADIS/bi_crystal/README.md)
 
 ---
 
