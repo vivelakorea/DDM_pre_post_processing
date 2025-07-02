@@ -29,6 +29,9 @@ config.mobilityLaw = 'HCP_linear';
 % --- Bicrystal Rotation (Bunge Euler Angles) ---
 bunge_phi1 = 45.0; bunge_PHI = 54.74; bunge_phi2 = 0.0; % In DEGREES
 bunge_phi1 = 0.0; bunge_PHI = 90.0; bunge_phi2 = 0.0; % For HCP soft grain
+if config.test_paradis_only
+    bunge_phi1 = 0.0; bunge_PHI = 0.0; bunge_phi2 = 0.0; 
+end
 config.R = bunge_euler_to_matrix(deg2rad(bunge_phi1), deg2rad(bunge_PHI), deg2rad(bunge_phi2));
 config.R = (config.R)';
 
@@ -50,9 +53,9 @@ config.name = 'D1750_Ti';
 
 
 % --- Material and Mobility Parameters ---
-config.burgMag = 2.556e-10; % Meters
-config.shearModulus = 4.8e10; % Pa
-config.pois = 0.34;
+config.burgMag = 2.95e-10; % Meters
+config.shearModulus = 4.2e10; % Pa
+config.pois = 0.32;
 
 if strcmp(config.crystalStructure, "HCP")
     % Be
@@ -62,24 +65,26 @@ if strcmp(config.crystalStructure, "HCP")
     % HCP specific parameters
     % cOVERa, HCPEcoreA, HCPEcoreC, HCPEcoreCpA, 
     
-    config.cOVERa = 1.58; % c/a ratio
-    config.HCPEcoreA = 18.06977e9; % Ecore energy for A
-    config.HCPEcoreC = 21.70031e9; % Ecore energy for C
-    config.HCPEcoreCpA = 7.18520e9; % Ecore energy for CpA
+    config.cOVERa = 1.587; % c/a ratio
+    % config.cOVERa =  1.5680 ;
+
+    config.HCPEcoreA = 20.0e9; % Ecore energy for A
+    config.HCPEcoreC = 30.0e9; % Ecore energy for C
+    config.HCPEcoreCpA = 10.0e9; % Ecore energy for CpA
     
     % HCP_A_Basal_EdgeDrag, HCP_A_Basal_ScrewDrag,
     % HCP_A_Prismatic_EdgeDrag, HCP_A_Prismatic_ScrewDrag,
     % HCP_A_1stPyramidal_EdgeDrag, HCP_A_1stPyramidal_ScrewDrag,
     % HCP_A_2ndPyramidal_EdgeDrag, HCP_A_2ndPyramidal_ScrewDrag,
 
-    config.HCP_A_Basal_EdgeDrag = 1.18434387898773e-04; % Basal edge drag
-    config.HCP_A_Basal_ScrewDrag = 1.65421659553579e-04; % Basal screw drag
-    config.HCP_A_Prismatic_EdgeDrag = 5.69513923115224e-05; % Prismatic edge drag
-    config.HCP_A_Prismatic_ScrewDrag = 7.15096201802962e-05; % Prismatic screw drag
-    config.HCP_A_1stPyramidal_EdgeDrag = 7.28268834977848e-05; % 1st Pyramidal edge drag
-    config.HCP_A_1stPyramidal_ScrewDrag = 1.05154866364405e-04; % 1st Pyramidal screw drag
-    config.HCP_A_2ndPyramidal_EdgeDrag = 7.28268834977848e-05; % 2nd Pyramidal edge drag
-    config.HCP_A_2ndPyramidal_ScrewDrag = 1.05154866364405e-04; % 2nd Pyramidal screw drag
+    config.HCP_A_Basal_EdgeDrag = 2.0e-05; % Basal edge drag
+    config.HCP_A_Basal_ScrewDrag = 4.0e-05; % Basal screw drag
+    config.HCP_A_Prismatic_EdgeDrag = 1.0e-05; % Prismatic edge drag
+    config.HCP_A_Prismatic_ScrewDrag = 2.0e-05; % Prismatic screw drag
+    config.HCP_A_1stPyramidal_EdgeDrag = 4.0e-05; % 1st Pyramidal edge drag
+    config.HCP_A_1stPyramidal_ScrewDrag = 8.0e-05; % 1st Pyramidal screw drag
+    config.HCP_A_2ndPyramidal_EdgeDrag = 4.0e-05; % 2nd Pyramidal edge drag
+    config.HCP_A_2ndPyramidal_ScrewDrag = 8.0e-05; % 2nd Pyramidal screw drag
 
     % From polyxtal literature, values are assumed 20 times basal edge
     % HCP_CpA_Prismatic_EdgeDrag, HCP_CpA_Prismatic_ScrewDrag,
@@ -182,7 +187,12 @@ for i_file = 1:config.num_files_to_generate
         b_base = slipSystems(rand_idx).b; n_base = slipSystems(rand_idx).n;
         if center_pos(2) < 0, b = b_base; n = n_base;
         else, b = (config.R * b_base')'; n = (config.R * n_base')'; end
+
+        % if rand() <= 0.5, b = -b; end
+        if rand() <= 0.5, n = -n; end
+
         if rand() <= 0.5, lineDirection = b; else, lineDirection = cross(b, n); end
+
         lineDirection = lineDirection / norm(lineDirection);
         
         mean_frs_length_m = config.frs_length_alpha / sqrt(config.targetDensity);
@@ -258,86 +268,207 @@ function systems = get_slip_systems(config)
     systems = struct('b', {}, 'n', {});
 
     if strcmpi(crystal_structure, 'HCP')
+        % c_a = config.cOVERa;
+        % a = 1.0; 
+        % c = c_a * a;
+        % 
+        % % --- Base Cartesian Vectors for burgers and normals ---
+        % % a-type vectors <11-20>/3 type
+        % b1 = [a, 0, 0];
+        % b2 = [-a/2, a*sqrt(3)/2, 0];
+        % b3 = [-a/2, -a*sqrt(3)/2, 0];
+        % 
+        % % <c+a>-type vectors <11-23>/3 type
+        % b4 = [a, 0, c];
+        % b5 = [-a/2,  a*sqrt(3)/2, c];
+        % b6 = [-a/2, -a*sqrt(3)/2, c];
+        % b7 = [a, 0, -c];
+        % b8 = [-a/2,  a*sqrt(3)/2, -c];
+        % b9 = [-a/2, -a*sqrt(3)/2, -c];
+        % 
+        % % <c>-type Burgers vector [0001]
+        % b10 = [0, 0, c];
+        % 
+        % % --- Slip Plane Normals ---
+        % % Basal (0001)
+        % n_basal = [0, 0, 1];
+        % % Prismatic {10-10}
+        % n_pr1 = [0, 1, 0]; n_pr2 = [sqrt(3)/2, -1/2, 0]; n_pr3 = [-sqrt(3)/2, -1/2, 0];
+        % % 1st Pyramidal {10-11}
+        % n_pyI1 = [0, -2*c/a, sqrt(3)]; n_pyI2 = [0, 2*c/a, sqrt(3)];
+        % n_pyI3 = [-sqrt(3)*c/a, -c/a, -sqrt(3)]; n_pyI4 = [sqrt(3)*c/a, c/a, -sqrt(3)];
+        % n_pyI5 = [sqrt(3)*c/a, -c/a, sqrt(3)]; n_pyI6 = [-sqrt(3)*c/a, c/a, sqrt(3)];
+        % % 2nd Pyramidal {11-22}
+        % n_pII1 = [a, 0, -c]; n_pII2 = [-a/2, a*sqrt(3)/2, -c]; n_pII3 = [-a/2, -a*sqrt(3)/2, -c];
+        % n_pII4 = [-a, 0, c]; n_pII5 = [a/2, -a*sqrt(3)/2, c]; n_pII6 = [a/2, a*sqrt(3)/2, c];
+        % 
+        % % =====================================================================
+        % % Add systems with orthogonality check
+        % % =====================================================================
+        % 
+        % % Table 1: Burgers vectors of type <a> (Total: 12 systems)
+        % % Basal (3 systems)
+        % add_system_if_orthogonal(b1, n_basal);
+        % add_system_if_orthogonal(b2, n_basal);
+        % add_system_if_orthogonal(b3, n_basal);
+        % 
+        % % Prismatic (3 systems)
+        % add_system_if_orthogonal(b1, n_pr1);
+        % add_system_if_orthogonal(b3, n_pr2);
+        % add_system_if_orthogonal(b2, n_pr3);
+        % 
+        % % 1st Pyramidal (6 systems)
+        % add_system_if_orthogonal(b1, n_pyI1); add_system_if_orthogonal(b1, n_pyI2);
+        % add_system_if_orthogonal(b2, n_pyI3); add_system_if_orthogonal(b2, n_pyI4);
+        % add_system_if_orthogonal(b3, n_pyI5); add_system_if_orthogonal(b3, n_pyI6);
+        % 
+        % % Table 2: Burgers vectors of type <c+a> (Total: 24 systems)
+        % % Prismatic (6 systems)
+        % add_system_if_orthogonal(b4, n_pr1); add_system_if_orthogonal(b7, n_pr1);
+        % add_system_if_orthogonal(b5, n_pr3); add_system_if_orthogonal(b8, n_pr3);
+        % add_system_if_orthogonal(b6, n_pr2); add_system_if_orthogonal(b9, n_pr2);
+        % 
+        % % 1st Pyramidal (12 systems)
+        % add_system_if_orthogonal(b5, n_pyI1); add_system_if_orthogonal(b6, n_pyI1);
+        % add_system_if_orthogonal(b8, n_pyI2); add_system_if_orthogonal(b9, n_pyI2);
+        % add_system_if_orthogonal(b6, n_pyI3); add_system_if_orthogonal(b7, n_pyI3);
+        % add_system_if_orthogonal(b5, n_pyI4); add_system_if_orthogonal(b4, n_pyI4);
+        % add_system_if_orthogonal(b4, n_pyI5); add_system_if_orthogonal(b8, n_pyI5);
+        % add_system_if_orthogonal(b7, n_pyI6); add_system_if_orthogonal(b9, n_pyI6);
+        % 
+        % % 2nd Pyramidal (6 systems)
+        % add_system_if_orthogonal(b5, n_pII1);
+        % add_system_if_orthogonal(b6, n_pII2);
+        % add_system_if_orthogonal(b4, n_pII3);
+        % add_system_if_orthogonal(b8, n_pII4);
+        % add_system_if_orthogonal(b9, n_pII5);
+        % add_system_if_orthogonal(b7, n_pII6);
+        % 
+        % % Table 3: Burgers vector of type <c> (Total: 3 systems)
+        % add_system_if_orthogonal(b10, n_pr1);
+        % add_system_if_orthogonal(b10, n_pr2);
+        % add_system_if_orthogonal(b10, n_pr3);
+
+
+        %%% Hard coding version
+
         c_a = config.cOVERa;
-        a = 1.0; 
-        c = c_a * a;
-
-        % --- Base Cartesian Vectors for burgers and normals ---
-        % a-type vectors <11-20>/3 type
-        b1 = [a, 0, 0];
-        b2 = [-a/2, a*sqrt(3)/2, 0];
-        b3 = [-a/2, -a*sqrt(3)/2, 0];
+        a_c = 1/c_a;
         
-        % <c+a>-type vectors <11-23>/3 type
-        b4 = [a, 0, c];
-        b5 = [-a/2,  a*sqrt(3)/2, c];
-        b6 = [-a/2, -a*sqrt(3)/2, c];
-        b7 = [a, 0, -c];
-        b8 = [-a/2,  a*sqrt(3)/2, -c];
-        b9 = [-a/2, -a*sqrt(3)/2, -c];
-
-        % <c>-type Burgers vector [0001]
-        b10 = [0, 0, c];
-
-        % --- Slip Plane Normals ---
-        % Basal (0001)
-        n_basal = [0, 0, 1];
-        % Prismatic {10-10}
-        n_pr1 = [0, 1, 0]; n_pr2 = [sqrt(3)/2, -1/2, 0]; n_pr3 = [-sqrt(3)/2, -1/2, 0];
-        % 1st Pyramidal {10-11}
-        n_pyI1 = [0, -2*c/a, sqrt(3)]; n_pyI2 = [0, 2*c/a, sqrt(3)];
-        n_pyI3 = [-sqrt(3)*c/a, -c/a, -sqrt(3)]; n_pyI4 = [sqrt(3)*c/a, c/a, -sqrt(3)];
-        n_pyI5 = [sqrt(3)*c/a, -c/a, sqrt(3)]; n_pyI6 = [-sqrt(3)*c/a, c/a, sqrt(3)];
-        % 2nd Pyramidal {11-22}
-        n_pII1 = [a, 0, -c]; n_pII2 = [-a/2, a*sqrt(3)/2, -c]; n_pII3 = [-a/2, -a*sqrt(3)/2, -c];
-        n_pII4 = [-a, 0, c]; n_pII5 = [a/2, -a*sqrt(3)/2, c]; n_pII6 = [a/2, a*sqrt(3)/2, c];
-
-        % =====================================================================
-        % Add systems with orthogonality check
-        % =====================================================================
+        dirs = [0	0	c_a;
+        0	0	c_a;
+        0	0	c_a;
+        1/2	-sqrt(3)/2	-c_a;
+        1/2	-sqrt(3)/2	-c_a;
+        1/2	-sqrt(3)/2	-c_a;
+        1/2	-sqrt(3)/2	-c_a;
+        1/2	-sqrt(3)/2	0;
+        1/2	-sqrt(3)/2	0;
+        1/2	-sqrt(3)/2	0;
+        1/2	-sqrt(3)/2	0;
+        1/2	-sqrt(3)/2	c_a;
+        1/2	-sqrt(3)/2	c_a;
+        1/2	-sqrt(3)/2	c_a;
+        1/2	-sqrt(3)/2	c_a;
+        1/2	sqrt(3)/2	-c_a;
+        1/2	sqrt(3)/2	-c_a;
+        1/2	sqrt(3)/2	-c_a;
+        1/2	sqrt(3)/2	-c_a;
+        1/2	sqrt(3)/2	0;
+        1/2	sqrt(3)/2	0;
+        1/2	sqrt(3)/2	0;
+        1/2	sqrt(3)/2	0;
+        1/2	sqrt(3)/2	c_a;
+        1/2	sqrt(3)/2	c_a;
+        1/2	sqrt(3)/2	c_a;
+        1/2	sqrt(3)/2	c_a;
+        -1	0	c_a;
+        -1	0	c_a;
+        -1	0	c_a;
+        -1	0	c_a;
+        1	0	0;
+        1	0	0;
+        1	0	0;
+        1	0	0;
+        1	0	c_a;
+        1	0	c_a;
+        1	0	c_a;
+        1	0	c_a;
+        ];
         
-        % Table 1: Burgers vectors of type <a> (Total: 12 systems)
-        % Basal (3 systems)
-        add_system_if_orthogonal(b1, n_basal);
-        add_system_if_orthogonal(b2, n_basal);
-        add_system_if_orthogonal(b3, n_basal);
-
-        % Prismatic (3 systems)
-        add_system_if_orthogonal(b1, n_pr1);
-        add_system_if_orthogonal(b3, n_pr2);
-        add_system_if_orthogonal(b2, n_pr3);
-
-        % 1st Pyramidal (6 systems)
-        add_system_if_orthogonal(b1, n_pyI1); add_system_if_orthogonal(b1, n_pyI2);
-        add_system_if_orthogonal(b2, n_pyI3); add_system_if_orthogonal(b2, n_pyI4);
-        add_system_if_orthogonal(b3, n_pyI5); add_system_if_orthogonal(b3, n_pyI6);
-
-        % Table 2: Burgers vectors of type <c+a> (Total: 24 systems)
-        % Prismatic (6 systems)
-        add_system_if_orthogonal(b4, n_pr1); add_system_if_orthogonal(b7, n_pr1);
-        add_system_if_orthogonal(b5, n_pr3); add_system_if_orthogonal(b8, n_pr3);
-        add_system_if_orthogonal(b6, n_pr2); add_system_if_orthogonal(b9, n_pr2);
+        nors = [0	1	0;
+        sqrt(3)/2	-1/2	0;
+        sqrt(3)/2	1/2	0;
+        0	c_a	-sqrt(3)/2;
+        1/2	-sqrt(3)/2	a_c;
+        1	-1/sqrt(3)	a_c;
+        sqrt(3)/2	1/2	0;
+        0	0	1;
+        1	1/sqrt(3)	-a_c;
+        1	1/sqrt(3)	a_c;
+        sqrt(3)/2	1/2	0;
+        0	c_a	sqrt(3)/2;
+        1/2	-sqrt(3)/2	-a_c;
+        1	-1/sqrt(3)	-a_c;
+        sqrt(3)/2	1/2	0;
+        0	c_a	sqrt(3)/2;
+        1/2	sqrt(3)/2	a_c;
+        1	1/sqrt(3)	a_c;
+        sqrt(3)/2	-1/2	0;
+        0	0	1;
+        1	-1/sqrt(3)	-a_c;
+        1	-1/sqrt(3)	a_c;
+        sqrt(3)/2	-1/2	0;
+        0	c_a	-sqrt(3)/2;
+        1/2	sqrt(3)/2	-a_c;
+        1	1/sqrt(3)	-a_c;
+        sqrt(3)/2	-1/2	0;
+        0	1	0;
+        1	-1/sqrt(3)	a_c;
+        1	1/sqrt(3)	a_c;
+        c_a	0	1;
+        0	0	1;
+        0	c_a	-sqrt(3)/2;
+        0	c_a	sqrt(3)/2;
+        0	1	0;
+        0	1	0;
+        1	-1/sqrt(3)	-a_c;
+        1	1/sqrt(3)	-a_c;
+        c_a	0	-1];
         
-        % 1st Pyramidal (12 systems)
-        add_system_if_orthogonal(b5, n_pyI1); add_system_if_orthogonal(b6, n_pyI1);
-        add_system_if_orthogonal(b8, n_pyI2); add_system_if_orthogonal(b9, n_pyI2);
-        add_system_if_orthogonal(b6, n_pyI3); add_system_if_orthogonal(b7, n_pyI3);
-        add_system_if_orthogonal(b5, n_pyI4); add_system_if_orthogonal(b4, n_pyI4);
-        add_system_if_orthogonal(b4, n_pyI5); add_system_if_orthogonal(b8, n_pyI5);
-        add_system_if_orthogonal(b7, n_pyI6); add_system_if_orthogonal(b9, n_pyI6);
-
-        % 2nd Pyramidal (6 systems)
-        add_system_if_orthogonal(b5, n_pII1);
-        add_system_if_orthogonal(b6, n_pII2);
-        add_system_if_orthogonal(b4, n_pII3);
-        add_system_if_orthogonal(b8, n_pII4);
-        add_system_if_orthogonal(b9, n_pII5);
-        add_system_if_orthogonal(b7, n_pII6);
+        % check if dir - nor pairs are unique
+        pairs = [dirs, nors];
+        unique_pairs = unique(pairs, 'rows');
+        if size(unique_pairs, 1) ~= size(pairs, 1)
+            disp('There are duplicate pairs of directions and normals.');
+        else
+            % disp('All pairs of directions and normals are unique.');
+        end
         
-        % Table 3: Burgers vector of type <c> (Total: 3 systems)
-        add_system_if_orthogonal(b10, n_pr1);
-        add_system_if_orthogonal(b10, n_pr2);
-        add_system_if_orthogonal(b10, n_pr3);
+        % check if the normals are orthogonal to the directions
+        orthogonal = true;
+        for i = 1:size(dirs, 1)
+            dir = dirs(i, :);
+            nor = nors(i, :);
+            if abs(dot(dir, nor)) > 1e-6  % tolerance for numerical precision
+                orthogonal = false;
+                fprintf('Pair %d is not orthogonal: dir = [%f, %f, %f], nor = [%f, %f, %f]\n', ...
+                        i, dir(1), dir(2), dir(3), nor(1), nor(2), nor(3));
+            end
+        end
+        if orthogonal
+            % disp('All normals are orthogonal to their corresponding directions.');
+        else
+            disp('Some normals are not orthogonal to their corresponding directions.');
+        end
+
+        planes = nors;
+        
+        for is = 1:size(planes,1)
+            systems(end+1).b = dirs(is,:);
+            systems(end).n = planes(is,:) / norm(planes(is,:));
+        end
+
 
     else % FCC or BCC Logic (Unchanged)
         if strcmpi(crystal_structure, 'FCC')
@@ -424,7 +555,7 @@ function write_paradis_data_file(config, fname, rn, links, box_b)
             node_pos_b = rn(i, 1:3);
             
             % Primary Line
-            fprintf(fid, ' 9,%d %.4f %.4f %.4f %d %d\n', ...
+            fprintf(fid, ' 0,%d %.4f %.4f %.4f %d %d\n', ...
                      i-1, node_pos_b(1), node_pos_b(2), node_pos_b(3), numNbrs, constraint);
             
             for j = 1:numNbrs
@@ -442,9 +573,9 @@ function write_paradis_data_file(config, fname, rn, links, box_b)
                 end
                 
                 % Secondary Lines (matching Be.txt format)
-                fprintf(fid, '   9,%d %e %e %e\n', ...
+                fprintf(fid, '   0,%d %1.9e %1.9e %1.9e\n', ...
                          neighbor_node_idx-1, bv(1), bv(2), bv(3));
-                fprintf(fid, '       %e %e %e\n', ...
+                fprintf(fid, '       %1.9e %1.9e %1.9e\n', ...
                          nv(1), nv(2), nv(3));
             end
         end
